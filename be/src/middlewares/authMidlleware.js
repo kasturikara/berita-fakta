@@ -16,21 +16,17 @@ export const authenticate = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     // verify user exists
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser(decoded.id);
+    const { data: user, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", decoded.id)
+      .single();
 
     if (error || !user) {
       return res.status(401).json({ success: false, message: "Invalid token" });
     }
 
-    req.user = {
-      id: user.id,
-      email: user.email,
-      role: decoded.role,
-    };
-
+    req.user = user;
     next();
   } catch (error) {
     res.status(401).json({
