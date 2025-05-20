@@ -1,13 +1,13 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React from "react";
 import axios from "axios";
 
-const AuthContext = createContext();
+const AuthContext = React.createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
 
-  useEffect(() => {
+  React.useEffect(() => {
     // check if user is logged in
     const checkAuthStatus = async () => {
       const token = localStorage.getItem("token");
@@ -102,4 +102,4 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => React.useContext(AuthContext);

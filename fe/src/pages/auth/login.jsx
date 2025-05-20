@@ -1,11 +1,11 @@
-import React, { useState } from "react";
+import React from "react";
 import { useAuth } from "../../context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 
 const LoginPages = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [email, setEmail] = React.useState("");
+  const [password, setPassword] = React.useState("");
+  const [error, setError] = React.useState("");
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -22,8 +22,8 @@ const LoginPages = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-base-200">
-      <div className="card w-96 bg-base-100 shadow-xl">
+    <div className="flex items-center justify-center min-h-screen bg-base-200">
+      <div className="shadow-xl card w-96 bg-base-100">
         <div className="card-body">
           <h2 className="text-2xl font-bold text-center">Login</h2>
           {error && <div className="alert alert-error">{error}</div>}
@@ -54,11 +54,11 @@ const LoginPages = () => {
                 required
               />
             </div>
-            <div className="form-control mt-6">
-              <button className="btn btn-primary">Login</button>
+            <div className="mt-6 form-control">
+              <button className="w-full btn btn-primary">Login</button>
             </div>
           </form>
-          <p className="text-center mt-4">
+          <p className="mt-4 text-center">
             Don't have an account?{" "}
             <Link to="/register" className="link link-primary">
               Register
