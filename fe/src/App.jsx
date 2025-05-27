@@ -4,11 +4,18 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./route/ProtectedRoute";
 import RoleBasedRoute from "./route/RoleBasedRoute";
 
+// layout
+const MainLayout = React.lazy(() => import("./layout/main"));
+const AuthLayout = React.lazy(() => import("./layout/auth"));
+const AdminLayout = React.lazy(() => import("./layout/admin"));
+const UserLayout = React.lazy(() => import("./layout/user"));
+
 // pages
 const LoginPages = React.lazy(() => import("./pages/auth/login"));
 const RegisterPages = React.lazy(() => import("./pages/auth/register"));
 const UnauthorizedPages = React.lazy(() => import("./pages/unauthorized"));
 const HomePages = React.lazy(() => import("./pages/home"));
+const LandingPages = React.lazy(() => import("./pages/landing"));
 
 // loading fallback component
 const LoadingFallback = () => (
@@ -23,19 +30,69 @@ const App = () => {
       <React.Suspense fallback={<LoadingFallback />}>
         <Routes>
           {/* public */}
-          <Route path="/login" element={<LoginPages />} />
-          <Route path="/register" element={<RegisterPages />} />
-          <Route path="/unauthorized" element={<UnauthorizedPages />} />
+          <Route
+            path="/"
+            element={
+              <MainLayout>
+                <LandingPages />
+              </MainLayout>
+            }
+          />
+          <Route
+            path="/login"
+            element={
+              <AuthLayout>
+                <LoginPages />
+              </AuthLayout>
+            }
+          />
+          <Route
+            path="/register"
+            element={
+              <AuthLayout>
+                <RegisterPages />
+              </AuthLayout>
+            }
+          />
+          <Route
+            path="/unauthorized"
+            element={
+              <MainLayout>
+                <UnauthorizedPages />
+              </MainLayout>
+            }
+          />
 
           {/* protected */}
           <Route element={<ProtectedRoute />}>
-            <Route path="/" element={<HomePages />} />
-            <Route path="/profile" element={<div>Profile</div>} />
+            <Route
+              path="/home"
+              element={
+                <UserLayout>
+                  <HomePages />
+                </UserLayout>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <UserLayout>
+                  <div>Profile</div>
+                </UserLayout>
+              }
+            />
           </Route>
 
           {/* admin route */}
           <Route element={<RoleBasedRoute allowedRoles={["admin"]} />}>
-            <Route path="/admin" element={<div>Admin dashboard</div>} />
+            <Route
+              path="/admin"
+              element={
+                <AdminLayout>
+                  <div>Admin Dashboard</div>
+                </AdminLayout>
+              }
+            />
           </Route>
 
           {/* fallback redirect */}
