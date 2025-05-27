@@ -1,73 +1,105 @@
+import React, { useState, useEffect } from "react";
 import axios from "axios";
-import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
 const ArticlesPages = () => {
-  const [articles, setArticles] = React.useState([]);
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState(null);
-  const [page, setPage] = React.useState(1);
-  const [totalPages, setTotalPages] = React.useState(0);
-  const [searchQuery, setSearchQuery] = React.useState("");
-  const [category, setCategory] = React.useState("");
-  const [categories, setCategories] = React.useState([]);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [articles, setArticles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [totalPages, setTotalPages] = useState(0);
 
-  // fetch articles with pagination & search
+  // get params from URL or use defaults
+  const page = parseInt(searchParams.get("page") || "1");
+  const searchQuery = searchParams.get("search") || "";
+  const categoryId = searchParams.get("category") || "";
+
+  // fetch articles with pagination, search, and category filter
   const fetchArticles = async () => {
     try {
       setLoading(true);
-      const queryParams = new URLSearchParams({
-        page,
-        limit: 9,
-      });
+      let url;
+      let queryParams = new URLSearchParams();
+      queryParams.append("page", page);
+      queryParams.append("limit", 9);
 
-      if (searchQuery) queryParams.append("search", searchQuery);
-      if (category) queryParams.append("category", category);
+      // if category is selected, use the category-specific endpoint
+      if (categoryId) {
+        url = `${
+          import.meta.env.VITE_API_URL
+        }/api/categories/${categoryId}/articles`;
+      } else {
+        url = `${import.meta.env.VITE_API_URL}/api/articles`;
+        // only add search param to general articles endpoint
+        if (searchQuery) {
+          queryParams.append("search", searchQuery);
+        }
+      }
 
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/articles?${queryParams.toString()}`
-      );
+      const response = await axios.get(`${url}?${queryParams.toString()}`);
+      console.log("API Response:", response.data);
 
       if (response.data.success) {
-        setArticles(response.data.data);
-        setTotalPages(response.data.meta.totalPages);
+        setArticles(response.data.data || []);
+        // get total pages from API response
+        setTotalPages(response.data.meta?.totalPages || 1);
+      } else {
+        throw new Error(response.data.message || "Failed to fetch articles");
       }
     } catch (error) {
-      setError("Failed to fetch articles. Please try again later.");
       console.error("Error fetching articles:", error);
+      setError("Failed to fetch articles. Please try again later.");
     } finally {
       setLoading(false);
     }
   };
 
-  // fetch categories
+  // fetch categories for filter dropdown
   const fetchCategories = async () => {
     try {
       const response = await axios.get(
         `${import.meta.env.VITE_API_URL}/api/categories`
       );
-      if (response.data.success) setCategories(response.data.data);
+      if (response.data.success) {
+        setCategories(response.data.data);
+      }
     } catch (error) {
       console.error("Error fetching categories:", error);
     }
   };
 
-  React.useEffect(() => {
+  // initial load - fetch categories
+  useEffect(() => {
     fetchCategories();
   }, []);
 
-  React.useEffect(() => {
+  // Fetch articles when page, search or category changes
+  useEffect(() => {
     fetchArticles();
-  }, [page, searchQuery, category]);
+  }, [page, searchQuery, categoryId]);
 
   const handleSearch = (e) => {
     e.preventDefault();
-    setPage(1); // reset to first page on search
-    fetchArticles();
+    const formData = new FormData(e.target);
+    const searchValue = formData.get("searchQuery");
+    const categoryValue = formData.get("category");
+
+    // Reset to page 1 when searching or changing category
+    setSearchParams({
+      ...(searchValue ? { search: searchValue } : {}),
+      ...(categoryValue ? { category: categoryValue } : {}),
+    });
   };
 
   const handlePageChange = (newPage) => {
-    if (newPage > 0 && newPage <= totalPages) setPage(newPage);
+    if (newPage > 0 && newPage <= totalPages) {
+      setSearchParams({
+        ...(newPage > 1 ? { page: newPage } : {}),
+        ...(searchQuery ? { search: searchQuery } : {}),
+        ...(categoryId ? { category: categoryId } : {}),
+      });
+    }
   };
 
   const formatDate = (dateString) => {
@@ -79,7 +111,7 @@ const ArticlesPages = () => {
     <div className="container px-4 py-8 mx-auto">
       <h1 className="mb-8 text-3xl font-bold">Daftar Artikel</h1>
 
-      {/* search & filter */}
+      {/* Search & filter form */}
       <div className="p-4 mb-8 rounded-lg bg-base-200">
         <form
           onSubmit={handleSearch}
@@ -88,20 +120,17 @@ const ArticlesPages = () => {
           <div className="flex-grow">
             <input
               type="text"
+              name="searchQuery"
               placeholder="Cari artikel..."
               className="w-full input input-bordered"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              defaultValue={searchQuery}
             />
           </div>
           <div className="md:w-1/4">
             <select
+              name="category"
               className="w-full select select-bordered"
-              value={category}
-              onChange={(e) => {
-                setCategory(e.target.value);
-                setPage(1); // reset to first page on category change
-              }}
+              defaultValue={categoryId}
             >
               <option value="">Semua Kategori</option>
               {categories.map((cat) => (
@@ -119,17 +148,19 @@ const ArticlesPages = () => {
         </form>
       </div>
 
-      {/* articles grid */}
+      {/* Articles grid */}
       {loading ? (
         <div className="flex justify-center py-12">
-          <div className="loading loading-bars loading-lg text-primary"></div>
+          <div className="loading loading-spinner loading-lg text-primary"></div>
         </div>
       ) : error ? (
         <div className="alert alert-error">{error}</div>
       ) : articles.length === 0 ? (
         <div className="py-12 text-center">
-          <h2 className="text-xl">Tidak ada artikel.</h2>
-          <p className="mt-2 text-gray-500">Coba </p>
+          <h2 className="text-xl">Tidak ada artikel ditemukan</h2>
+          <p className="mt-2 text-gray-500">
+            Coba ubah kata kunci pencarian atau pilih kategori lain
+          </p>
         </div>
       ) : (
         <>
@@ -137,12 +168,12 @@ const ArticlesPages = () => {
             {articles.map((item) => (
               <div
                 key={item.id}
-                className="transition-shadow shadow-lg card bg-base-100 hover:shadow-xl"
+                className="transition-shadow shadow-lg card bg-base-100 hover:shadow-xl hover:shadow-primary"
               >
                 <figure className="h-48 overflow-hidden">
                   <img
                     src={
-                      articles.cover_image_url ||
+                      item.cover_image_url ||
                       "https://placehold.co/600x400?text=Tidak+Ada+Gambar"
                     }
                     alt={item.title}
@@ -152,7 +183,7 @@ const ArticlesPages = () => {
                 <div className="card-body">
                   <div className="flex items-center gap-2 mb-2">
                     <div className="badge badge-primary">
-                      {item.categories?.name}
+                      {item.categories?.name || "-"}
                     </div>
                     <span className="text-sm text-gray-500">
                       {formatDate(item.published_at)}
@@ -167,13 +198,17 @@ const ArticlesPages = () => {
                         <img
                           src={
                             item.profiles?.avatar_url ||
-                            `https://ui-avatars.com/api/?name=${item.profiles?.full_name}`
+                            `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                              item.profiles?.full_name || "User"
+                            )}`
                           }
-                          alt={item.profiles?.full_name}
+                          alt={item.profiles?.full_name || "User"}
                         />
                       </div>
                     </div>
-                    <span className="text-sm">{item.profiles?.full_name}</span>
+                    <span className="text-sm">
+                      {item.profiles?.full_name || "Anonymous"}
+                    </span>
                   </div>
                   <div className="mt-4 card-actions">
                     <Link
@@ -188,12 +223,12 @@ const ArticlesPages = () => {
             ))}
           </div>
 
-          {/* pagination */}
-          {totalPages > 0 && (
+          {/* Pagination */}
+          {totalPages > 1 && (
             <div className="flex justify-center mt-10">
               <div className="join">
                 <button
-                  className="btn join-item"
+                  className="join-item btn"
                   onClick={() => handlePageChange(page - 1)}
                   disabled={page === 1}
                 >
