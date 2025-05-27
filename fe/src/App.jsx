@@ -1,104 +1,129 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import { AuthProvider } from "./context/AuthContext";
 import { Navigate, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./route/ProtectedRoute";
 import RoleBasedRoute from "./route/RoleBasedRoute";
 
-// layout
-const MainLayout = React.lazy(() => import("./layout/main"));
-const AuthLayout = React.lazy(() => import("./layout/auth"));
-const AdminLayout = React.lazy(() => import("./layout/admin"));
-const UserLayout = React.lazy(() => import("./layout/user"));
-
-// pages
-const LoginPages = React.lazy(() => import("./pages/auth/login"));
-const RegisterPages = React.lazy(() => import("./pages/auth/register"));
-const UnauthorizedPages = React.lazy(() => import("./pages/unauthorized"));
-const HomePages = React.lazy(() => import("./pages/home"));
-const LandingPages = React.lazy(() => import("./pages/landing"));
-
-// loading fallback component
+// Loading component
 const LoadingFallback = () => (
   <div className="flex items-center justify-center h-screen">
     <div className="loading loading-spinner loading-xl text-primary"></div>
   </div>
 );
 
+// Lazy loaded layouts
+const MainLayout = lazy(() => import("./layout/main"));
+const AuthLayout = lazy(() => import("./layout/auth"));
+const AdminLayout = lazy(() => import("./layout/admin"));
+const UserLayout = lazy(() => import("./layout/user"));
+
+// Lazy loaded pages
+const LoginPages = lazy(() => import("./pages/auth/login"));
+const RegisterPages = lazy(() => import("./pages/auth/register"));
+const UnauthorizedPages = lazy(() => import("./pages/unauthorized"));
+const HomePages = lazy(() => import("./pages/home"));
+const LandingPages = lazy(() => import("./pages/landing"));
+
+// Route configuration objects
+const publicRoutes = [
+  {
+    path: "/",
+    layout: MainLayout,
+    component: LandingPages,
+  },
+  {
+    path: "/login",
+    layout: AuthLayout,
+    component: LoginPages,
+  },
+  {
+    path: "/register",
+    layout: AuthLayout,
+    component: RegisterPages,
+  },
+  {
+    path: "/unauthorized",
+    layout: MainLayout,
+    component: UnauthorizedPages,
+  },
+  {
+    path: "/articles",
+    layout: MainLayout,
+    component: () => <div>Articles List</div>,
+  },
+];
+
+const protectedRoutes = [
+  {
+    path: "/home",
+    layout: UserLayout,
+    component: HomePages,
+  },
+  {
+    path: "/profile",
+    layout: UserLayout,
+    component: () => <div>Profile</div>,
+  },
+];
+
+const adminRoutes = [
+  {
+    path: "/admin",
+    layout: AdminLayout,
+    component: () => <div>Admin Dashboard</div>,
+  },
+];
+
 const App = () => {
+  const renderRoute = (route, key, Layout, Component) => (
+    <Route
+      key={key}
+      path={route.path}
+      element={
+        <Layout>
+          <Component />
+        </Layout>
+      }
+    />
+  );
+
   return (
     <AuthProvider>
-      <React.Suspense fallback={<LoadingFallback />}>
+      <Suspense fallback={<LoadingFallback />}>
         <Routes>
-          {/* public */}
-          <Route
-            path="/"
-            element={
-              <MainLayout>
-                <LandingPages />
-              </MainLayout>
-            }
-          />
-          <Route
-            path="/login"
-            element={
-              <AuthLayout>
-                <LoginPages />
-              </AuthLayout>
-            }
-          />
-          <Route
-            path="/register"
-            element={
-              <AuthLayout>
-                <RegisterPages />
-              </AuthLayout>
-            }
-          />
-          <Route
-            path="/unauthorized"
-            element={
-              <MainLayout>
-                <UnauthorizedPages />
-              </MainLayout>
-            }
-          />
+          {/* Public routes */}
+          {publicRoutes.map((route, index) =>
+            renderRoute(route, `public-${index}`, route.layout, route.component)
+          )}
 
-          {/* protected */}
+          {/* Protected routes */}
           <Route element={<ProtectedRoute />}>
-            <Route
-              path="/home"
-              element={
-                <UserLayout>
-                  <HomePages />
-                </UserLayout>
-              }
-            />
-            <Route
-              path="/profile"
-              element={
-                <UserLayout>
-                  <div>Profile</div>
-                </UserLayout>
-              }
-            />
+            {protectedRoutes.map((route, index) =>
+              renderRoute(
+                route,
+                `protected-${index}`,
+                route.layout,
+                route.component
+              )
+            )}
           </Route>
 
-          {/* admin route */}
+          {/* Admin routes */}
           <Route element={<RoleBasedRoute allowedRoles={["admin"]} />}>
-            <Route
-              path="/admin"
-              element={
-                <AdminLayout>
-                  <div>Admin Dashboard</div>
-                </AdminLayout>
-              }
-            />
+            {adminRoutes.map((route, index) =>
+              renderRoute(
+                route,
+                `admin-${index}`,
+                route.layout,
+                route.component
+              )
+            )}
           </Route>
 
-          {/* fallback redirect */}
+          {/* Fallback redirect */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-      </React.Suspense>
+      </Suspense>
     </AuthProvider>
   );
 };

@@ -29,10 +29,10 @@ const Footer = () => {
           <div>
             <span className="footer-title">Info Akun</span>
             <Link to="/login" className="link link-hover">
-              Login
+              Masuk
             </Link>
             <Link to="/register" className="link link-hover">
-              Register
+              Daftar
             </Link>
           </div>
 
