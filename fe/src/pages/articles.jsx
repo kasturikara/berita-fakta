@@ -38,7 +38,6 @@ const ArticlesPages = () => {
       }
 
       const response = await axios.get(`${url}?${queryParams.toString()}`);
-      console.log("API Response:", response.data);
 
       if (response.data.success) {
         setArticles(response.data.data || []);
