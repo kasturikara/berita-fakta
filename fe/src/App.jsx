@@ -1,6 +1,6 @@
 import React, { Suspense, lazy } from "react";
-import { AuthProvider } from "./context/AuthContext";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import { Navigate, Outlet, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./route/ProtectedRoute";
 import RoleBasedRoute from "./route/RoleBasedRoute";
 
@@ -33,16 +33,6 @@ const publicRoutes = [
     component: LandingPages,
   },
   {
-    path: "/login",
-    layout: AuthLayout,
-    component: LoginPages,
-  },
-  {
-    path: "/register",
-    layout: AuthLayout,
-    component: RegisterPages,
-  },
-  {
     path: "/unauthorized",
     layout: MainLayout,
     component: UnauthorizedPages,
@@ -51,6 +41,20 @@ const publicRoutes = [
     path: "/articles",
     layout: MainLayout,
     component: ArticlePages,
+  },
+];
+
+// auth routes
+const authRoutes = [
+  {
+    path: "/login",
+    layout: AuthLayout,
+    component: LoginPages,
+  },
+  {
+    path: "/register",
+    layout: AuthLayout,
+    component: RegisterPages,
   },
 ];
 
@@ -75,6 +79,17 @@ const adminRoutes = [
   },
 ];
 
+// redirect if authenticated
+const RedirectIfAuthenticated = ({ redirectTo = "/" }) => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <LoadingFallback />;
+  }
+
+  return user ? <Navigate to={redirectTo} replace /> : <Outlet />;
+};
+
 const App = () => {
   const renderRoute = (route, key, Layout, Component) => (
     <Route
@@ -96,6 +111,13 @@ const App = () => {
           {publicRoutes.map((route, index) =>
             renderRoute(route, `public-${index}`, route.layout, route.component)
           )}
+
+          {/* auth routes */}
+          <Route element={<RedirectIfAuthenticated />}>
+            {authRoutes.map((route, index) =>
+              renderRoute(route, `auth-${index}`, route.layout, route.component)
+            )}
+          </Route>
 
           {/* Protected routes */}
           <Route element={<ProtectedRoute />}>

@@ -1,4 +1,5 @@
 @import "tailwindcss";
 @plugin "daisyui" {
-  themes: bumblebee --default, coffee;
+  /* themes: bumblebee --default, coffee; */
+  themes: valentine --default, coffee;
 }
