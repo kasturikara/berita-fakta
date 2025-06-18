@@ -54,7 +54,6 @@ export const getAllArticles = async (req, res) => {
     dataQuery = dataQuery.range(from, to);
 
     const { data, error } = await dataQuery;
-    console.log("count : ", count);
 
     if (error) throw error;
 

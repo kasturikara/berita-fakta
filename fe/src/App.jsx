@@ -24,6 +24,7 @@ const UnauthorizedPages = lazy(() => import("./pages/unauthorized"));
 const HomePages = lazy(() => import("./pages/home"));
 const LandingPages = lazy(() => import("./pages/landing"));
 const ArticlePages = lazy(() => import("./pages/articles"));
+const CategoriesPages = lazy(() => import("./pages/categories"));
 
 // Route configuration objects
 const publicRoutes = [
@@ -41,6 +42,11 @@ const publicRoutes = [
     path: "/articles",
     layout: MainLayout,
     component: ArticlePages,
+  },
+  {
+    path: "/categories",
+    layout: MainLayout,
+    component: CategoriesPages,
   },
 ];
 
