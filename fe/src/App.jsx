@@ -27,6 +27,7 @@ const ArticlePages = lazy(() => import("./pages/articles"));
 const CategoriesPages = lazy(() => import("./pages/categories"));
 const CreateArticlesPages = lazy(() => import("./pages/createArticle"));
 const MyArticlesPages = lazy(() => import("./pages/myArticles"));
+const ProfilePages = lazy(() => import("./pages/profile"));
 
 const RootRoute = () => {
   const { user, loading } = useAuth();
@@ -87,7 +88,7 @@ const protectedRoutes = [
   {
     path: "/profile",
     layout: UserLayout,
-    component: () => <div>Profile</div>,
+    component: ProfilePages,
   },
   {
     path: "/articles/new",

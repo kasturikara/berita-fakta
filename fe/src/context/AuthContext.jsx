@@ -1,13 +1,13 @@
-import React from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import axios from "axios";
 
-const AuthContext = React.createContext();
+const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = React.useState(null);
-  const [loading, setLoading] = React.useState(true);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  React.useEffect(() => {
+  useEffect(() => {
     // check if user is logged in
     const checkAuthStatus = async () => {
       const token = localStorage.getItem("token");
@@ -95,11 +95,21 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Update user function (for profile updates)
+  const updateUser = (updatedUserData) => {
+    setUser((prev) => ({
+      ...prev,
+      ...updatedUserData,
+    }));
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider
+      value={{ user, loading, login, register, logout, setUser: updateUser }}
+    >
       {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => React.useContext(AuthContext);
+export const useAuth = () => useContext(AuthContext);
