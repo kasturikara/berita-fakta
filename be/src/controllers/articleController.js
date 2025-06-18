@@ -339,33 +339,56 @@ export const deleteArticle = async (req, res) => {
 // get articles by author
 export const getArticlesByAuthor = async (req, res) => {
   try {
-    const { author_id } = req.params;
-    const { page = 1, limit = 10 } = req.query;
+    const { id } = req.params;
+    const { page = 1, limit = 10, status } = req.query;
 
     const from = (page - 1) * limit;
     const to = from + limit - 1;
 
-    const { data, error, count } = await supabase
+    // Build the query
+    let query = supabase
       .from("articles")
       .select(
         `
         id,
         title,
+        content,
         cover_image_url,
+        status,
         published_at,
-        categories(id, name)
+        created_at,
+        updated_at,
+        author_id,
+        categories(id, name),
+        profiles(id, username, full_name, avatar_url)
         `,
         { count: "exact" }
       )
-      .eq("author_id", author_id)
-      .eq("status", "published")
-      .order("published_at", { ascending: false })
-      .range(from, to);
+      .eq("author_id", id);
+
+    // If we have a status filter, apply it
+    if (status) {
+      query = query.eq("status", status);
+    }
+
+    // Check if it's the user's own articles (auth check would already be done in the route)
+    const isOwnArticles = req.user && req.user.id === id;
+
+    // If not the user's own articles, only show published ones
+    if (!isOwnArticles) {
+      query = query.eq("status", "published");
+    }
+
+    // Apply pagination and order
+    query = query.order("created_at", { ascending: false }).range(from, to);
+
+    const { data, error, count } = await query;
 
     if (error) throw error;
+
     res.json({
-      data,
       success: true,
+      data: data,
       meta: {
         total: count,
         page: parseInt(page),

@@ -25,14 +25,33 @@ const HomePages = lazy(() => import("./pages/home"));
 const LandingPages = lazy(() => import("./pages/landing"));
 const ArticlePages = lazy(() => import("./pages/articles"));
 const CategoriesPages = lazy(() => import("./pages/categories"));
+const CreateArticlesPages = lazy(() => import("./pages/createArticle"));
+const MyArticlesPages = lazy(() => import("./pages/myArticles"));
+
+const RootRoute = () => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <LoadingFallback />;
+  }
+
+  if (user) {
+    return (
+      <UserLayout>
+        <HomePages />
+      </UserLayout>
+    );
+  }
+
+  return (
+    <MainLayout>
+      <LandingPages />
+    </MainLayout>
+  );
+};
 
 // Route configuration objects
 const publicRoutes = [
-  {
-    path: "/",
-    layout: MainLayout,
-    component: LandingPages,
-  },
   {
     path: "/unauthorized",
     layout: MainLayout,
@@ -66,14 +85,19 @@ const authRoutes = [
 
 const protectedRoutes = [
   {
-    path: "/home",
-    layout: UserLayout,
-    component: HomePages,
-  },
-  {
     path: "/profile",
     layout: UserLayout,
     component: () => <div>Profile</div>,
+  },
+  {
+    path: "/articles/new",
+    layout: UserLayout,
+    component: CreateArticlesPages,
+  },
+  {
+    path: "/articles/me",
+    layout: UserLayout,
+    component: MyArticlesPages,
   },
 ];
 
@@ -113,6 +137,9 @@ const App = () => {
     <AuthProvider>
       <Suspense fallback={<LoadingFallback />}>
         <Routes>
+          {/* ROOT */}
+          <Route path="/" element={<RootRoute />} />
+
           {/* Public routes */}
           {publicRoutes.map((route, index) =>
             renderRoute(route, `public-${index}`, route.layout, route.component)

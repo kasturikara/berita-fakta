@@ -15,7 +15,7 @@ const LoginPages = () => {
 
     const response = await login(email, password);
     if (response.success) {
-      navigate("/");
+      navigate("/home");
     } else {
       setError(response.message);
     }
@@ -39,6 +39,7 @@ const LoginPages = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                autoComplete="on"
               />
             </div>
             <div className="form-control">

@@ -1,8 +1,8 @@
 import React from "react";
-import Navbar from "../components/navigation/Navbar";
-import Footer from "../components/navigation/Footer";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 
 const UserLayout = ({ children }) => {
   const { user } = useAuth();
@@ -35,16 +35,16 @@ const UserLayout = ({ children }) => {
 
             <ul className="menu">
               <li>
-                <Link to="/home">Dashboard</Link>
+                <Link to="/">Beranda</Link>
               </li>
               <li>
-                <Link to="/articles">My Articles</Link>
+                <Link to="/articles/me">Artikel Saya</Link>
               </li>
               <li>
-                <Link to="/articles/new">Write New Article</Link>
+                <Link to="/articles/new">Tulis Artikel Baru</Link>
               </li>
               <li>
-                <Link to="/profile">Profile Settings</Link>
+                <Link to="/profile">Profil</Link>
               </li>
             </ul>
           </aside>

@@ -15,7 +15,32 @@ const router = express.Router();
 // public routes
 router.get("/", getAllArticles);
 router.get("/:id", getArticleById);
-router.get("/author/:id", getArticlesByAuthor);
+// Mixed route - handles both public and authenticated access
+router.get(
+  "/author/:id",
+  async (req, res, next) => {
+    // Check if this is a request for the user's own articles
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader) {
+      // No auth token, treat as public request (only published articles)
+      next();
+      return;
+    }
+
+    try {
+      // Apply authentication for user's own articles
+      authenticate(req, res, () => {
+        // Authentication worked, continue to the handler
+        next();
+      });
+    } catch (error) {
+      // Authentication failed, default to public access
+      next();
+    }
+  },
+  getArticlesByAuthor
+);
 
 // protected routes (requires authentication)
 router.use(authenticate);
